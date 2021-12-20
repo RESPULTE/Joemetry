@@ -1,8 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-setup.cfg
-src/joemetry.egg-info/PKG-INFO
-src/joemetry.egg-info/SOURCES.txt
-src/joemetry.egg-info/dependency_links.txt
-src/joemetry.egg-info/top_level.txt
