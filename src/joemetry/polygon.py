@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Union
-from point import Point, C, N
+from joemetry._type_hints import *
+from .point import Point
 
 
 # INTERSECT, STRETCHING(maybe?), translation?, CIRCLE
@@ -33,7 +33,7 @@ class Polygon:
 
 
     @property
-    def center(polygon: List[Point]) -> Point:
+    def center(self) -> Point:
         '''returns the center of the polygon using the bounding box of it as reference'''
         bottomleft, topright = self.bounding_box
         center_x = bottomleft.x + ((topright.x - bottomleft.x) / 2)
@@ -67,14 +67,14 @@ class Polygon:
 
 
     @classmethod
-    def convert(cls, polygons: List[List[C]]) -> List['Polygon']:
+    def convert(cls, polygons: List[List[Coor]]) -> List['Polygon']:
         '''convert a list of list of points into a list of polygons'''
         if not all(isinstance(c, (tuple, list)) for c in polygons):
             raise TypeError(f"the given data type must be tuples containing float/int")
         return [cls(poly) for poly in polygons]
 
 
-    def add_vertex(self, point: C, index: Optional[int] = -1) -> None:
+    def add_vertex(self, point: Coor, index: Optional[int] = -1) -> None:
         '''adds a new vertex into the polygon with the given index'''
         self.vertex.insert(index, Point(*point)) 
 
@@ -86,7 +86,7 @@ class Polygon:
 
     def rotate(self, 
         angle: float, 
-        origin: Optional[C] = (0,0),
+        origin: Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> 'Polygon':
         '''
@@ -100,7 +100,7 @@ class Polygon:
 
     def rotate_ip(self, 
         angle: float, 
-        origin: Optional[C] = (0,0),
+        origin: Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> None:
         '''
@@ -112,34 +112,38 @@ class Polygon:
         [point.rotate_ip(angle, origin, clockwise) for point in self.vertex]
 
 
-    def enlarge(self, scale_factor: N):
+    def enlarge(self, scale_factor: Num):
         '''enlarge/shrink "this" polygon by the given scale factor'''
         self.vertex = [point * scale_factor for point in self.vertex]
 
 
-    def enlarge_to(self, target_area: N):
+    def enlarge_to(self, target_area: Num):
         '''enlarge/shrink "this" polygon to the given area'''
         ...
 
-    def __mul__(self, scale_factor: N):
+    def __mul__(self, scale_factor: Num):
         '''enlarge/shrink "this" polygon by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot multiply {type(self).__name__} by '{type(scale_factor).__name__}'")
         return Polygon([point * scale_factor for point in self.vertex])
 
 
-    def __truediv__(self, scale_factor: N):
+    def __truediv__(self, scale_factor: Num):
         '''enlarge/shrink "this" polygon by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot divide {type(self).__name__} by '{type(scale_factor).__name__}'")
         return Polygon([point / scale_factor for point in self.vertex])
 
 
-    def __floordiv__(self, scale_factor: N):
+    def __floordiv__(self, scale_factor: Num):
         '''enlarge/shrink "this" polygon by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot divide(floor) {type(self).__name__} by '{type(scale_factor).__name__}'")
         return Polygon([point // scale_factor for point in self.vertex])
+
+
+    def __iter__(self):
+        return iter((self.vertex))
 
 
     def __getitem__(self, index):

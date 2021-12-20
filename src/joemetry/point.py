@@ -1,10 +1,6 @@
-from dataclasses import dataclass
-from typing import List, Tuple, Union, Optional, TypeVar
 from math import sin, cos, radians, sqrt, ceil, floor, acos
-
-
-N = Union[float, int]
-C = TypeVar('C', Tuple[N, N], 'Point')
+from dataclasses import dataclass
+from joemetry._type_hints import *
 
 
 @dataclass
@@ -35,11 +31,19 @@ class Point:
     
 
     @classmethod
-    def convert(cls, coordinates: List[C]) -> List['Point']:
+    def convert(cls, coordinates: List[Coor]) -> List['Point']:
         '''convert a list of tuple into Points'''
         if not all(isinstance(c, tuple) for c in coordinates):
             raise TypeError(f"the given data type must be tuples containing float/int")
         return [cls(*point) for point in coordinates]
+
+
+    def astuple(self) -> tuple:
+        return (self.x, self.y)
+
+
+    def update(self, other: Coor) -> None:
+        self.x, self.y = other[0], other[1]
 
 
     def scale_to_length(self, length: float) -> None:
@@ -64,41 +68,41 @@ class Point:
         self.y /= self._length
 
 
-    def cross(self, other: C, origin: Optional[C] = (0, 0)) -> float:
+    def cross(self, other: Coor, origin: Optional[Coor] = (0, 0)) -> float:
         '''
         returns the cross product of betweeen 'this' point and another point
         origin: use this tuple/point object as the relative origin of both point
         '''
         x1, y1 = (self.x - origin[0]), (self.y - origin[1])
-        x2, y2 = (other[1] - origin[1]), (other[1] - origin[1])  
+        x2, y2 = (other[0] - origin[0]), (other[1] - origin[1])  
         return (x1 * y2) - (y1 * x2)
 
 
-    def dot(self, other: C, origin: Optional[C] = (0, 0)) -> float:
+    def dot(self, other: Coor, origin: Optional[Coor] = (0, 0)) -> float:
         '''
         returns the dot product of betweeen 'this' point and another point
         origin: use this tuple/point object as the relative origin of both point
         '''
         x1, y1 = (self.x - origin[0]), (self.y - origin[1])
-        x2, y2 = (other[1] - origin[1]), (other[1] - origin[1])     
+        x2, y2 = (other[0] - origin[0]), (other[1] - origin[1])     
         return (x1 * x2) + (y1 * y2)
 
 
     # TO BE FIXED
-    def get_perpendicular(self, ref_point: C) -> 'Point':
+    def get_perpendicular(self, ref_point: Coor) -> 'Point':
         '''
         get the point that is perpendicular to "this" point
         ref_point: use this to get the desired perpendicular point ('up' or 'down')
         '''
         perpendicular_line = Point(self.y, -self.x)
-        if perpendicular_line.dot(ref_point) > 0:
+        if perpendicular_line.dot(ref_point) < 0:
             perpendicular_line *= -1
         return perpendicular_line
 
 
     def rotate(self, 
-        angle    : N, 
-        origin   : Optional[C] = (0,0),
+        angle    : Num, 
+        origin   : Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> 'Point':
         '''
@@ -130,8 +134,8 @@ class Point:
 
 
     def rotate_ip(self, 
-        angle    : N, 
-        origin   : Optional[C] = (0,0),
+        angle    : Num, 
+        origin   : Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> None:
         '''
@@ -163,8 +167,8 @@ class Point:
 
 
     def angle_to(self, 
-        other    : C, 
-        origin   : Optional[C] = (0,0), 
+        other    : Coor, 
+        origin   : Optional[Coor] = (0,0), 
         clockwise: Optional[bool] = False,
         ) -> float:
         '''
@@ -185,7 +189,7 @@ class Point:
         return angle * -1 if clockwise else angle
 
 
-    def in_polygon(self, polygon: List[C]) -> bool:
+    def in_polygon(self, polygon: List[Coor]) -> bool:
         '''
         returns a True if "this" point is inside of a polygon and vice versa
         uses the cross product to determine the whereabouts of the point
@@ -197,7 +201,7 @@ class Point:
         return all(map(lambda cross_product: cross_product <= 0, cross_check))
 
 
-    def in_circle(self, center: C, radius: float) -> bool:
+    def in_circle(self, center: Coor, radius: float) -> bool:
         '''
         returns a True if "this" point is inside of a circle and vice versa
         '''
@@ -210,33 +214,33 @@ class Point:
         return False
 
 
-    def __add__(self, other: C):
+    def __add__(self, other: Coor):
         if isinstance(other, (type(self), tuple)):
             return Point(self.x + other[0], self.y + other[1])
         raise TypeError(f'addition with an invalid type: {type(other)}!')
 
 
-    def __sub__(self, other: C):
+    def __sub__(self, other: Coor):
         if isinstance(other, (type(self), tuple)):
             return Point(self.x - other[0], self.y - other[1])
         raise TypeError(f'subtraction with an invalid type: {type(other)}!')
 
 
-    def __mul__(self, val: N):
+    def __mul__(self, val: Num):
         '''contract/extend the point's position by the given scale factor'''
         if not isinstance(val, (float, int)):
             raise TypeError(f"cannot multiply {type(self).__name__} by '{type(val).__name__}'")
         return Point(self.x * val, self.y * val)
 
 
-    def __truediv__(self, val: N):
+    def __truediv__(self, val: Num):
         '''contract/extend the point's position by the given scale factor'''
         if not isinstance(val, (float, int)):
             raise TypeError(f"cannot divide {type(self).__name__} by '{type(val).__name__}'")
         return Point(self.x / val, self.y / val)
 
 
-    def __floordiv__(self, val: N):
+    def __floordiv__(self, val: Num):
         '''contract/extend the point's position by the given scale factor'''
         if not isinstance(val, (float, int)):
             raise TypeError(f"cannot divide(floor) {type(self).__name__} by '{type(val).__name__}'")
@@ -275,12 +279,12 @@ class Point:
         return Point(int(floor(self.x)), int(floor(self.y)))
 
 
-    def __getitem__(self, index: int) -> N:
+    def __getitem__(self, index: int) -> Num:
         if index == 0: return self.x
         if index == 1: return self.y
 
 
-    def __setitem__(self, index: int, val: N) -> None:
+    def __setitem__(self, index: int, val: Num) -> None:
         if index == 0: self.x = val
         if index == 1: self.y = val
 

@@ -29,7 +29,4 @@ def ear_clipping(polygon: List[Point]) -> List[List[Point]]:
     return polygon
 
          
-def delauny_triangulation(polygon: List[Point]) -> List[List[Point]]:
-    polygon = sorted(polygon, key=lambda point: point[0])
-    triangle_subsets = [polygon[i:i + 3] for i in range(0, len(polygon), 3)]
 

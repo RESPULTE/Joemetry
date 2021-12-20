@@ -1,10 +1,10 @@
-from typing import List, Tuple, Optional, Union
 from dataclasses import dataclass, field
-from vector2D import Vector2D as vec
+from joemetry import Segment
+from joemetry._type_hints import *
 
 
 @dataclass
-class Point:
+class PointType:
 
     sort_index: int 
     position: Tuple[int, int] 
@@ -15,10 +15,10 @@ class Point:
 
             if self.position == other.position:
 
-                if isinstance(self, StartingPoint):
+                if isinstance(self, StartingPointType):
                     return self.line[1][1] > other.line[1][1]
 
-                elif isinstance(self, EndingPoint):
+                elif isinstance(self, EndingPointType):
                     return self.line[0][1] > other.line[0][1]
 
                 else:
@@ -27,13 +27,7 @@ class Point:
                     # make the operations a lil bit more efficient, since this can avoid evaluating the same point twice
                     return True
 
-
-            # TO BE CHANGED AFTER THE VECTOR CLASS IS FIXED
-            elif self.sort_index == self.position[0]:
-                return self.position[1] > other.position[1]
-
-            elif self.sort_index == self.position[1]:
-                return self.position[0] > other.position[0]
+            return self.position > other.position
 
         elif self.sort_index > other.sort_index:
             return True
@@ -43,9 +37,9 @@ class Point:
         if self.sort_index == other.sort_index:
 
             if self.position == other.position:
-                if isinstance(self, StartingPoint):
+                if isinstance(self, StartingPointType):
                     return self.line[1][1] < other.line[1][1]
-                elif isinstance(self, EndingPoint):
+                elif isinstance(self, EndingPointType):
                     return self.line[0][1] < other.line[0][1]
                 else:
                     # if the point being compared is an intersecting point 
@@ -53,29 +47,25 @@ class Point:
                     # make the operations a lil bit more efficient, since this can avoid evaluating the same point twice
                     return False
 
-            elif self.sort_index == self.position[0]:
-                return self.position[1] < other.position[1]
-
-            elif self.sort_index == self.position[1]:
-                return self.position[0] < other.position[0]
+            return self.position < other.position
 
         elif self.sort_index < other.sort_index:
             return True
 
 
 @dataclass
-class StartingPoint(Point):
+class StartingPointType(PointType):
 
-    line: Tuple[vec, vec] 
-
-
-@dataclass
-class EndingPoint(Point):
-
-    line: Tuple[vec, vec]
+    line: Segment
 
 
 @dataclass
-class IntersectingPoint(Point): 
+class EndingPointType(PointType):
 
-    points: Tuple[Tuple[vec, vec]] 
+    line: Segment
+
+
+@dataclass
+class IntersectingPointType(PointType): 
+
+    points: Tuple[PointType, PointType]

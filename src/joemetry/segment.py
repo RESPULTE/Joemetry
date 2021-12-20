@@ -1,7 +1,6 @@
-from typing import List, Optional, Union, Tuple
 from dataclasses import dataclass
-from math import sqrt
-from point import Point, C, N
+from joemetry._type_hints import *
+from .point import *
 
 
 @dataclass
@@ -53,7 +52,7 @@ class Segment:
     
 
     @classmethod
-    def convert(cls, segments: List[Tuple[C, C]]) -> List['Segment']:
+    def convert(cls, segments: List[Tuple[Coor, Coor]]) -> List['Segment']:
         '''converts either a list of tuple of point objects or a list of tuple of tuple of 2 float into segment objects'''
         if not all(isinstance(c, (tuple, list)) for c in segments):
             raise TypeError(f"the given data type must be tuples containing float/int")
@@ -83,7 +82,7 @@ class Segment:
         return self.start.cross(other.start) == self.end.cross(other.end) == 0
 
 
-    def scale_to_length(self, length: N, direction='mid') -> None:
+    def scale_to_length(self, length: Num, direction='mid') -> None:
         '''
         extend or contract "this" segment to the given length
         direction: valid options -> "start", "mid", "end"
@@ -108,8 +107,8 @@ class Segment:
 
 
     def rotate(self, 
-        angle: N, 
-        origin: Optional[C] = (0,0),
+        angle: Num, 
+        origin: Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> 'Segment':
         '''
@@ -122,8 +121,8 @@ class Segment:
 
 
     def rotate_ip(self, 
-        angle: N, 
-        origin: Optional[C] = (0,0),
+        angle: Num, 
+        origin: Optional[Coor] = (0,0),
         clockwise: Optional[bool] = True
         ) -> None:
         '''
@@ -136,7 +135,7 @@ class Segment:
         self.end.rotate_ip(angle, origin, clockwise)
 
 
-    def intersect_with(self, other: 'Segment') -> C:
+    def intersect_with(self, other: 'Segment') -> Coor:
         '''
         returns either None or an intersecting point of both segment 
         '''
@@ -155,21 +154,21 @@ class Segment:
         return None
 
 
-    def __mul__(self, scale_factor: N):
+    def __mul__(self, scale_factor: Num):
         '''contract/extend the segment's length by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot multiply {type(self).__name__} by '{type(scale_factor).__name__}'")
         return Segment(self.start * scale_factor, self.end * scale_factor)
 
 
-    def __truediv__(self, scale_factor: N):
+    def __truediv__(self, scale_factor: Num):
         '''contract/extend the segment's length by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot divide {type(self).__name__} by '{type(scale_factor).__name__}'")
         return Segment(self.start / scale_factor, self.end / scale_factor)
 
 
-    def __floordiv__(self, scale_factor: N):
+    def __floordiv__(self, scale_factor: Num):
         '''contract/extend the segment's length by the given scale factor'''
         if not isinstance(scale_factor, (float, int)):
             raise TypeError(f"cannot divide(floor) {type(self).__name__} by '{type(scale_factor).__name__}'")
@@ -181,7 +180,7 @@ class Segment:
         if index == 1: return self.end
 
 
-    def __setitem__(self, index: int, val: C) -> N:
+    def __setitem__(self, index: int, val: Coor) -> Num:
         if index == 0: self.start = Point(*val)
         if index == 1: self.end = Point(*val)
 

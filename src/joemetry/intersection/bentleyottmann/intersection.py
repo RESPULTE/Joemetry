@@ -1,17 +1,10 @@
 from binarytree import AVL
-from vector2D import Vector2D as vec
-from joemetry.utility import get_intersect
-from .point_type import *
+from joemetry import Segment, Point
+from joemetry._type_hints import *
+from ._point_type import StartingPointType, EndingPointType, IntersectingPointType
 
 
-Coordinate  = Tuple[int, int]
-LineSegment = Tuple[Coordinate, Coordinate]
-
-
-# TO BE CHANGED AFTER THE VECTOR CLASS IS FIXED
-# -> REMOVE THE .astuple
-
-class BentlyOttmann:
+class CheckSegmentIntersection:
     '''
         - a basic sweep line algorithm to detect intersection in n-number of lines
 
@@ -73,16 +66,16 @@ class BentlyOttmann:
     '''
 
     def __new__(cls,
-        lines: LineSegment, 
+        lines: S, 
         getLine: Optional[bool]=False
-        ) -> Union[List[Coordinate], List[LineSegment], None]:
+        ) -> Union[List[C], List[S], None]:
         return super().__new__(cls)(lines, getLine)
 
 
     def __call__(self, 
-        lines: LineSegment, 
+        lines: S, 
         getLine: Optional[bool]=False
-        ) -> Union[List[Coordinate], List[LineSegment], None]:
+        ) -> Union[List[C], List[S], None]:
 
         # data structure for storing all the points
         # activeQueue: y-axis sorted
@@ -96,28 +89,28 @@ class BentlyOttmann:
 
         # initialize the event queue with the x-axis as the sorting index
         for line in lines:
-            vec_line = vec.convert(line)
-            self.eventQueue.insert(StartingPoint(line[0][0], line[0],vec_line))
-            self.eventQueue.insert(EndingPoint(line[1][0], line[1], vec_line))
+            vec_line = Segment(*line)
+            self.eventQueue.insert(StartingPointType(line[0][0], line[0],vec_line))
+            self.eventQueue.insert(EndingPointType(line[1][0], line[1], vec_line))
 
         return self.sweep(getLine)
 
 
-    def sweep(self, getLine: Optional[bool]=False) -> Union[List[Coordinate], List[LineSegment], None]:
-        while not self.eventQueue.isempty: 
+    def sweep(self, getLine: Optional[bool]=False) -> Union[List[C], List[S], None]:
+        while not self.eventQueue.isempty:
 
             current_point = self.eventQueue.pop(key='min')
             # change the sorting index to y-axis 
             # -> to get the correct set of points when it's passed into the activeQueue 
             current_point.sort_index = current_point.position[1]
-
-            if not isinstance(current_point, IntersectingPoint):
+        
+            if not isinstance(current_point, IntersectingPointType):
 
                 # get the point that is 'above' or 'below' the current point, based on the y-axis
                 lower_point = self.activeQueue.find_lt(current_point)
                 upper_point = self.activeQueue.find_gt(current_point)
 
-                if isinstance(current_point, StartingPoint):
+                if isinstance(current_point, StartingPointType):
                     self.handle_starting_point(current_point, upper_point, lower_point)
                     continue
 
@@ -131,20 +124,20 @@ class BentlyOttmann:
             return (self.intersected_points, self.intersected_lines) if getLine else self.intersected_points
 
         return None
-
+        
 
     def handle_starting_point(self, current_point, upper_point, lower_point):
         # if there's a segment below the current point, check if they intersect
         if upper_point:
-            intersect_up = get_intersect(current_point.line, upper_point.line)
+            intersect_up = current_point.line.intersect_with(upper_point.line)
             if intersect_up:
-                self.eventQueue.insert(IntersectingPoint(intersect_up[0], intersect_up.astuple, (upper_point, current_point)))
+                self.eventQueue.insert(IntersectingPointType(intersect_up[0], intersect_up.astuple(), (upper_point, current_point)))
 
         # if there's a segment above the current point, check if they intersect
         if lower_point:
-            intersect_down = get_intersect(current_point.line, lower_point.line)
+            intersect_down = current_point.line.intersect_with(lower_point.line)
             if intersect_down:
-                self.eventQueue.insert(IntersectingPoint(intersect_down[0], intersect_down.astuple, (current_point, lower_point)))
+                self.eventQueue.insert(IntersectingPointType(intersect_down[0], intersect_down.astuple(), (current_point, lower_point)))
 
         self.activeQueue.insert(current_point)
 
@@ -152,10 +145,10 @@ class BentlyOttmann:
     def handle_ending_point(self, current_point, upper_point, lower_point):
         # check whather the line segment that's below and above it intersect
         if lower_point and upper_point:
-            intersect_up_down = get_intersect(upper_point.line, lower_point.line)
+            intersect_up_down = upper_point.line.intersect_with(lower_point.line)
 
             if intersect_up_down:
-                self.eventQueue.insert(IntersectingPoint(intersect_up_down[0], intersect_up_down.astuple, (upper_point, lower_point)))
+                self.eventQueue.insert(IntersectingPointType(intersect_up_down[0], intersect_up_down.astuple(), (upper_point, lower_point)))
 
         # remove the node with the line segment from the activeQueue 
         # doing it like this since the 'owner' of the line is swapped for each intersection point
@@ -174,12 +167,6 @@ class BentlyOttmann:
         self.intersected_points.add(current_point.position)
         self.intersected_lines.append((up_point.line, down_point.line))
 
-        # if the intersected point is the starting/ending point of the intersecting line segments
-        # just return, since the point will have been evaluated by now
-        # TO BE CHANGED AFTER THE VECTOR CLASS IS FIXED
-        # -> REMOVE vec()
-        if vec(current_point.position) in up_point.line: return  
-
         # get the neighbour of both of those points
         # -> the point that is even higher than the upper point
         # -> the point that is even lower thatn the upper point
@@ -191,13 +178,12 @@ class BentlyOttmann:
         
         # check whether lower point's line intersects with the line of neighbour of upper point 
         if neigh_up:
-            intersect_up = get_intersect(neigh_up.line, up_point.line)
+            intersect_up = neigh_up.line.intersect_with(up_point.line)
             if intersect_up:
-                self.eventQueue.insert(IntersectingPoint(intersect_up[0], intersect_up.astuple, (neigh_up, down_point)))
+                self.eventQueue.insert(IntersectingPointType(intersect_up[0], intersect_up.astuple(), (neigh_up, down_point)))
         
         # check whether upper point's line intersects with the line of neighbour of lower point 
         if neigh_down:
-            intersect_down = get_intersect(neigh_down.line, down_point.line)
+            intersect_down = neigh_down.line.intersect_with(down_point.line)
             if intersect_down:
-                self.eventQueue.insert(IntersectingPoint(intersect_down[0], intersect_down.astuple, (neigh_down, up_point)))
-
+                self.eventQueue.insert(IntersectingPointType(intersect_down[0], intersect_down.astuple(), (neigh_down, up_point)))
